@@ -23,7 +23,7 @@ const float fovy = 45.0f;
 const float speed = 0.1f;
 const float sensitivity = 0.05f;
 
-float yaw = -90.f, pitch = 0.0f;
+float yaw = -135.0f, pitch = 0.0f;
 double lastX = NX / 2, lastY = NY / 2;
 bool cursorPosSet = false;
 
@@ -55,7 +55,7 @@ typedef struct {
 
 static ShaderData initShaderData(int nx, int ny) {
     ShaderData shaderData = {0};
-    cP = newV3(0.0f, 0.0f, 9.0f);
+    cP = newV3(0.0f, 0.0f, 3.0f);
     wUp = newV3(0.0f, 1.0f, 0.0f);
     updateCamera();
     shaderData.nx = (float)nx;
@@ -173,6 +173,9 @@ void main() {
     v3 laserP = cP;
     v3 laserDir = cFront;
     const float step = 0.1f;
+    float distTraced = 0.0f;
+    float nextTurnDist = 0.0f;
+    float sign = 1.0f;
     float sqrNorm = dotV3(laserP, laserP);
     trailPos[0] = laserP;
     int trailNumPoints = 1;
@@ -198,8 +201,14 @@ void main() {
         actOnInput(window, &shaderData);
 
         if (sqrNorm < boxR2) {
+            if (fabsf(distTraced - nextTurnDist) < 0.01f) {
+                laserDir = mulV3(sign, crossV3(laserDir, wUp));
+                sign = -1.0f * sign;
+                nextTurnDist += 3.0f;
+            }
             laserP = addV3(laserP, mulV3(step, laserDir));
             sqrNorm = dotV3(laserP, laserP);
+            distTraced += step;
             trailPos[trailNumPoints++] = laserP;
         }
 
