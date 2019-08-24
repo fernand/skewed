@@ -38,16 +38,21 @@ void main() {
 
     vec3 direction = normalize(lowerLeftCorner + s * horizontal + t * vertical - origin);
     vec3 point = origin;
-    vec3 prevPoint;
+    float distTraced = 0.0;
+    float nextTurnDist = 0.0;
+    float crossSign = 1.0;
     float prevSqrNorm;
     float sqrNorm = dot(point, point);
-    float distSinceLastTurn = 0.0;
 
     for (int i=0; i<NUM_ITER; i++) {
-        prevPoint = point;
-        prevSqrNorm = sqrNorm;
+        if (nextTurnDist - distTraced < 0.01f) {
+            direction = crossSign * cross(direction, vec3(0., 1., 0.));
+            crossSign = -1.0 * crossSign;
+            nextTurnDist += 3.0;
+        }
         point += STEP * direction;
         sqrNorm = dot(point, point);
+        distTraced += STEP;
         
         if (sqrNorm > BOX_R2) {
             break;

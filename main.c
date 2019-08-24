@@ -201,7 +201,7 @@ void main() {
         actOnInput(window, &shaderData);
 
         if (sqrNorm < boxR2) {
-            if (fabsf(distTraced - nextTurnDist) < 0.01f) {
+            if (nextTurnDist - distTraced < 0.01f) {
                 laserDir = mulV3(sign, crossV3(laserDir, wUp));
                 sign = -1.0f * sign;
                 nextTurnDist += 3.0f;
