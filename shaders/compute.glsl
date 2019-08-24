@@ -17,8 +17,8 @@ const float STEP = 0.05;
 const float BOX_R2 = 100.0;
 
 const float SPH_R = 0.25;
-const vec3 SPH_1 = vec3(0., 0., 3.5);
-const vec3 SPH_2 = vec3(0., 0., -3.5);
+const vec3 SPH_1 = vec3(0., 0., 1.25);
+const vec3 SPH_2 = vec3(0., 0., -1.25);
 const vec4 RED = vec4(1., 0., 0., 1.);
 const vec4 GREEN = vec4(0., 1., 0., 1.);
 
@@ -41,6 +41,7 @@ void main() {
     vec3 prevPoint;
     float prevSqrNorm;
     float sqrNorm = dot(point, point);
+    float distSinceLastTurn = 0.0;
 
     for (int i=0; i<NUM_ITER; i++) {
         prevPoint = point;

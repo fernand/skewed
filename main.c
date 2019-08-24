@@ -15,6 +15,8 @@
 
 #define NX 2560
 #define NY 1440
+#define TRAIL_LEN 1000
+const float boxR2 = 10.0f * 10.0f;
 
 const float oneRadian = PI / 180.0f;
 const float fovy = 45.0f;
@@ -53,7 +55,7 @@ typedef struct {
 
 static ShaderData initShaderData(int nx, int ny) {
     ShaderData shaderData = {0};
-    cP = newV3(0.0f, 0.0f, 10.0f);
+    cP = newV3(0.0f, 0.0f, 9.0f);
     wUp = newV3(0.0f, 1.0f, 0.0f);
     updateCamera();
     shaderData.nx = (float)nx;
@@ -162,10 +164,52 @@ void main() {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fboId);
     glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outputTextureId, 0);
 
+    GLuint vaoId;
+    glGenVertexArrays(1, &vaoId);
+    glBindVertexArray(vaoId);
+    v3 *trailPos = calloc(TRAIL_LEN*sizeof(v3), sizeof(v3));
+    v3 *trailView = calloc(TRAIL_LEN*sizeof(v3), sizeof(v3));
+
+    v3 laserP = cP;
+    v3 laserDir = cFront;
+    const float step = 0.1f;
+    float sqrNorm = dotV3(laserP, laserP);
+    trailPos[0] = laserP;
+    int trailNumPoints = 1;
+
+    const float f = 1.0f / shaderData.halfHeight;
+    const float zFar = 100.0f, zNear = 0.1f;
+    const float aspect = (float)NX / NY;
+    v3 laserPView = lookAt(cP, u, v, w, laserP);
+    trailView[0] = perspective(f, aspect, zNear, zFar, laserPView);
+
+    GLuint vboId;
+    glGenBuffers(1, &vboId);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
+    glBufferData(GL_ARRAY_BUFFER, 3*TRAIL_LEN*sizeof(float), trailView, GL_STREAM_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+
+    GLuint vsShaderId = shaderFromSource("laserVs", GL_VERTEX_SHADER, "shaders/laser.vs");
+    GLuint fsShaderId = shaderFromSource("laserFs", GL_FRAGMENT_SHADER, "shaders/laser.fs");
+    GLuint laserProgramId = shaderProgramFromShaders(vsShaderId, fsShaderId);
+
     while(!glfwWindowShouldClose(window)) {
         actOnInput(window, &shaderData);
 
+        if (sqrNorm < boxR2) {
+            laserP = addV3(laserP, mulV3(step, laserDir));
+            sqrNorm = dotV3(laserP, laserP);
+            trailPos[trailNumPoints++] = laserP;
+        }
+
+        for (int i=0; i<trailNumPoints; i++) {
+            laserPView = lookAt(cP, u, v, w, trailPos[i]);
+            trailView[i] = perspective(f, aspect, zNear, zFar, laserPView);
+        }
+
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(shaderData), &shaderData);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*trailNumPoints, trailView);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -173,6 +217,9 @@ void main() {
         glDispatchCompute(NX/32, NY/32, 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         glBlitFramebuffer(0, 0, NX, NY, 0, 0, NX, NY, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        
+        glUseProgram(laserProgramId);
+        glDrawArrays(GL_LINE_STRIP, 0, trailNumPoints);
 
         glfwSwapBuffers(window);
 
