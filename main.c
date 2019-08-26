@@ -54,7 +54,7 @@ typedef struct {
 
 static ShaderData initShaderData(int nx, int ny) {
     ShaderData shaderData = {0};
-    cP = newV3(0.0f, 0.0f, 3.5f);
+    cP = newV3(0.0f, 0.0f, 1.5f);
     wUp = newV3(0.0f, 1.0f, 0.0f);
     updateCamera();
     shaderData.nx = (float)nx;

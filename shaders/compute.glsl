@@ -40,15 +40,21 @@ void main() {
     vec3 point = origin;
     float distTraced = 0.0;
     float nextTurnDist = 2.0 * sqrt(2.0);
-    float crossSign = 1.0;
+    int numTurns = 0;
     float prevSqrNorm;
     float sqrNorm = dot(point, point);
 
     for (int i=0; i<NUM_ITER; i++) {
         if (nextTurnDist - distTraced < 0.1f) {
-            direction = crossSign * cross(direction, cUp.xyz);
-            crossSign = -1.0 * crossSign;
-            nextTurnDist += 2.0 * sqrt(2.0);
+            if (numTurns == 0) {
+                direction = cross(direction, cUp.xyz);
+            } else {
+                direction = - cross(direction, cUp.xyz);
+            }
+            nextTurnDist += 1.0;
+            if (numTurns == 3) {
+                numTurns = 0;
+            }
         }
         point += STEP * direction;
         sqrNorm = dot(point, point);
