@@ -23,7 +23,7 @@ const float fovy = 45.0f;
 const float speed = 0.1f;
 const float sensitivity = 0.05f;
 
-float yaw = -135.0f, pitch = 0.0f;
+float yaw = -90.0f, pitch = 0.0f;
 double lastX = NX / 2, lastY = NY / 2;
 bool cursorPosSet = false;
 
@@ -48,6 +48,7 @@ typedef struct {
     float halfHeight;
     float _;
     v4 eye;
+    v4 cUp;
     v4 u;
     v4 v;
     v4 w;
@@ -55,13 +56,14 @@ typedef struct {
 
 static ShaderData initShaderData(int nx, int ny) {
     ShaderData shaderData = {0};
-    cP = newV3(0.0f, 0.0f, 3.0f);
+    cP = newV3(0.0f, 0.0f, 3.5f);
     wUp = newV3(0.0f, 1.0f, 0.0f);
     updateCamera();
     shaderData.nx = (float)nx;
     shaderData.ny = (float)ny;
     shaderData.halfHeight = tanf(fovy * PI / (180.f * 2.0f));
     shaderData.eye = fromV3(cP);
+    shaderData.cUp = fromV3(cUp);
     shaderData.u = fromV3(u);
     shaderData.v = fromV3(v);
     shaderData.w = fromV3(w);
@@ -104,6 +106,7 @@ static void actOnInput(GLFWwindow *window, ShaderData *shaderData) {
     }
 
     shaderData->eye = fromV3(cP);
+    shaderData->cUp = fromV3(cUp);
     shaderData->u = fromV3(u);
     shaderData->v = fromV3(v);
     shaderData->w = fromV3(w);
@@ -173,7 +176,7 @@ void main() {
     v3 laserP = cP;
     v3 laserDir = cFront;
     const float step = 0.1f;
-    float distTraced = 0.0f;
+    float distTraced = 1.0;
     float nextTurnDist = 0.0f;
     float sign = 1.0f;
     float sqrNorm = dotV3(laserP, laserP);
@@ -197,14 +200,22 @@ void main() {
     GLuint fsShaderId = shaderFromSource("laserFs", GL_FRAGMENT_SHADER, "shaders/laser.fs");
     GLuint laserProgramId = shaderProgramFromShaders(vsShaderId, fsShaderId);
 
+    int numFrames = 0;
+
     while(!glfwWindowShouldClose(window)) {
         actOnInput(window, &shaderData);
 
+        numFrames++;
+        if (numFrames == 60) {
+            printf("cP %f, %f, %f\n", cP.x, cP.y, cP.z);
+            numFrames = 0;
+        }
+
         if (sqrNorm < boxR2) {
             if (nextTurnDist - distTraced < 0.01f) {
-                laserDir = mulV3(sign, crossV3(laserDir, wUp));
+                laserDir = mulV3(sign, crossV3(laserDir, cUp));
                 sign = -1.0f * sign;
-                nextTurnDist += 3.0f;
+                nextTurnDist += 2.0f * sqrtf(2.0);
             }
             laserP = addV3(laserP, mulV3(step, laserDir));
             sqrNorm = dotV3(laserP, laserP);
@@ -227,8 +238,8 @@ void main() {
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         glBlitFramebuffer(0, 0, NX, NY, 0, 0, NX, NY, GL_COLOR_BUFFER_BIT, GL_NEAREST);
         
-        glUseProgram(laserProgramId);
-        glDrawArrays(GL_LINE_STRIP, 0, trailNumPoints);
+        //glUseProgram(laserProgramId);
+        //glDrawArrays(GL_LINE_STRIP, 0, trailNumPoints);
 
         glfwSwapBuffers(window);
 

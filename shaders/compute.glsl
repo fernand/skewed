@@ -1,11 +1,11 @@
 #version 430
 layout(local_size_x = 32, local_size_y = 32) in;
 layout(rgba32f, binding = 0) uniform image2D pixels;
-layout(rgba32f, binding = 1) uniform image2D skyMap;
 layout(std430, binding = 0) readonly buffer data
 {
     vec4 nxNyHalfHeight;
     vec4 eye;
+    vec4 cUp;
     vec4 u;
     vec4 v;
     vec4 w;
@@ -16,9 +16,9 @@ const int NUM_ITER = 10000;
 const float STEP = 0.05;
 const float BOX_R2 = 100.0;
 
-const float SPH_R = 0.25;
-const vec3 SPH_1 = vec3(0., 0., 1.25);
-const vec3 SPH_2 = vec3(0., 0., -1.25);
+const float SPH_R = 0.5;
+const vec3 SPH_1 = vec3(0., 0., 1.0);
+const vec3 SPH_2 = vec3(0., 0., -1.0);
 const vec4 RED = vec4(1., 0., 0., 1.);
 const vec4 GREEN = vec4(0., 1., 0., 1.);
 
@@ -39,16 +39,16 @@ void main() {
     vec3 direction = normalize(lowerLeftCorner + s * horizontal + t * vertical - origin);
     vec3 point = origin;
     float distTraced = 0.0;
-    float nextTurnDist = 0.0;
+    float nextTurnDist = 2.0 * sqrt(2.0);
     float crossSign = 1.0;
     float prevSqrNorm;
     float sqrNorm = dot(point, point);
 
     for (int i=0; i<NUM_ITER; i++) {
-        if (nextTurnDist - distTraced < 0.01f) {
-            direction = crossSign * cross(direction, vec3(0., 1., 0.));
+        if (nextTurnDist - distTraced < 0.1f) {
+            direction = crossSign * cross(direction, cUp.xyz);
             crossSign = -1.0 * crossSign;
-            nextTurnDist += 3.0;
+            nextTurnDist += 2.0 * sqrt(2.0);
         }
         point += STEP * direction;
         sqrNorm = dot(point, point);
