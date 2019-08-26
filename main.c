@@ -200,16 +200,8 @@ void main() {
     GLuint fsShaderId = shaderFromSource("laserFs", GL_FRAGMENT_SHADER, "shaders/laser.fs");
     GLuint laserProgramId = shaderProgramFromShaders(vsShaderId, fsShaderId);
 
-    int numFrames = 0;
-
     while(!glfwWindowShouldClose(window)) {
         actOnInput(window, &shaderData);
-
-        numFrames++;
-        if (numFrames == 60) {
-            printf("cP %f, %f, %f\n", cP.x, cP.y, cP.z);
-            numFrames = 0;
-        }
 
         if (sqrNorm < boxR2) {
             if (nextTurnDist - distTraced < 0.01f) {
