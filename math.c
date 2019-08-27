@@ -20,6 +20,14 @@ static inline v3 mulV3(float a, v3 u) {
     return result;
 }
 
+static inline v3 hadamardV3(v3 u, v3 v) {
+    v3 result;
+    result.x = u.x * v.x;
+    result.y = u.y * v.y;
+    result.z = u.z * v.z;
+    return result;
+}
+
 static inline v3 addV3(v3 u, v3 v) {
     v3 result;
     result.x = u.x + v.x;

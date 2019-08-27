@@ -18,7 +18,6 @@
 
 const float oneRadian = PI / 180.0f;
 const float fovy = 45.0f;
-const float speed = 0.03f;
 const float sensitivity = 0.05f;
 
 float yaw = -90.0f, pitch = 0.0f;
@@ -26,6 +25,7 @@ double lastX = NX / 2, lastY = NY / 2;
 bool cursorPosSet = false;
 
 v3 cP, cFront, cRight, cUp, wUp;
+v3 speed;
 v3 u, v, w;
 
 static void updateCamera() {
@@ -56,6 +56,7 @@ static ShaderData initShaderData(int nx, int ny) {
     ShaderData shaderData = {0};
     cP = newV3(0.0f, 0.0f, 5.5f);
     wUp = newV3(0.0f, 1.0f, 0.0f);
+    speed = newV3(0.03f, 0.0f, 0.03f);
     updateCamera();
     shaderData.nx = (float)nx;
     shaderData.ny = (float)ny;
@@ -91,16 +92,16 @@ static void actOnInput(GLFWwindow *window, ShaderData *shaderData) {
     updateCamera();
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        cP = addV3(cP, mulV3(speed, cFront));
+        cP = addV3(cP, hadamardV3(speed, cFront));
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        cP = subtractV3(cP, mulV3(speed, cFront));
+        cP = subtractV3(cP, hadamardV3(speed, cFront));
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        cP = subtractV3(cP, mulV3(speed, cRight));
+        cP = subtractV3(cP, hadamardV3(speed, cRight));
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        cP = addV3(cP, mulV3(speed, cRight));
+        cP = addV3(cP, hadamardV3(speed, cRight));
     }
 
     shaderData->eye = fromV3(cP);

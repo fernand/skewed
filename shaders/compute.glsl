@@ -37,6 +37,7 @@ vec4 opU(vec4 d1, vec4 d2) {
 
 vec4 map(in vec3 pos) {
     vec4 res = vec4(1e10, 0.0, 0.0, 0.0);
+#if 0
     res = opU(res, vec4(dPlane(pos, vec4(0.0, 1.0, 0.0, 0.5)), BLUE));
     res = opU(res, vec4(dBox(pos - vec3(0.0, 0.0, 0.0), unitBox), RED));
     res = opU(res, vec4(dBox(pos - vec3(0.0, 0.0, -2.0), unitBox), RED));
@@ -47,7 +48,7 @@ vec4 map(in vec3 pos) {
     res = opU(res, vec4(dBox(pos - vec3(2.0, 0.0, 0.0), unitBox), RED));
     res = opU(res, vec4(dBox(pos - vec3(2.0, 0.0, -2.0), unitBox), RED));
     res = opU(res, vec4(dBox(pos - vec3(2.0, 0.0, -4.0), unitBox), RED));
-#if 0
+#endif
     res = opU(res, vec4(dPlane(pos, vec4(0.0, 1.0, 0.0, 0.5)), BLUE));
     res = opU(res, vec4(dSphere(pos - vec3(0.0, 0.0, 0.0), 0.25), RED));
     res = opU(res, vec4(dSphere(pos - vec3(0.0, 0.0, -2.0), 0.25), RED));
@@ -58,7 +59,6 @@ vec4 map(in vec3 pos) {
     res = opU(res, vec4(dSphere(pos - vec3(2.0, 0.0, 0.0), 0.25), RED));
     res = opU(res, vec4(dSphere(pos - vec3(2.0, 0.0, -2.0), 0.25), RED));
     res = opU(res, vec4(dSphere(pos - vec3(2.0, 0.0, -4.0), 0.25), RED));
-#endif
     return res;
 }
 
