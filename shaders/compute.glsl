@@ -15,15 +15,20 @@ const float PI = 3.1415926535897932384626433832795;
 
 const vec3 RED = vec3(1., 0., 0.);
 const vec3 GREEN = vec3(0., 1., 0.);
+const vec3 BLUE = vec3(0., 0., 1.);
 const vec3 unitBox = vec3(0.5, 0.5, 0.5);
 
-float sdSphere(vec3 p, float r) {
-    return length(p) - r;
+float dSphere(vec3 p, float r) {
+    return abs(length(p) - r);
 }
 
-float sdBox(vec3 p, vec3 b) {
+float dBox(vec3 p, vec3 b) {
     vec3 d = abs(p) - b;
-    return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
+    return length(max(d, 0.0));
+}
+
+float dPlane(vec3 p, vec4 n) {
+    return abs(dot(p, n.xyz) + n.w);
 }
 
 vec4 opU(vec4 d1, vec4 d2) {
@@ -32,26 +37,28 @@ vec4 opU(vec4 d1, vec4 d2) {
 
 vec4 map(in vec3 pos) {
     vec4 res = vec4(1e10, 0.0, 0.0, 0.0);
+    res = opU(res, vec4(dPlane(pos, vec4(0.0, 1.0, 0.0, 0.5)), BLUE));
+    res = opU(res, vec4(dBox(pos - vec3(0.0, 0.0, 0.0), unitBox), RED));
+    res = opU(res, vec4(dBox(pos - vec3(0.0, 0.0, -2.0), unitBox), RED));
+    res = opU(res, vec4(dBox(pos - vec3(0.0, 0.0, -4.0), unitBox), RED));
+    res = opU(res, vec4(dBox(pos - vec3(-2.0, 0.0, 0.0), unitBox), RED));
+    res = opU(res, vec4(dBox(pos - vec3(-2.0, 0.0, -2.0), unitBox), RED));
+    res = opU(res, vec4(dBox(pos - vec3(-2.0, 0.0, -4.0), unitBox), RED));
+    res = opU(res, vec4(dBox(pos - vec3(2.0, 0.0, 0.0), unitBox), RED));
+    res = opU(res, vec4(dBox(pos - vec3(2.0, 0.0, -2.0), unitBox), RED));
+    res = opU(res, vec4(dBox(pos - vec3(2.0, 0.0, -4.0), unitBox), RED));
 #if 0
-    res = opU(res, vec4(sdBox(pos - vec3(0.0, 0.0, 0.0), unitBox), RED));
-    res = opU(res, vec4(sdBox(pos - vec3(0.0, 0.0, -2.0), unitBox), RED));
-    res = opU(res, vec4(sdBox(pos - vec3(0.0, 0.0, -4.0), unitBox), RED));
-    res = opU(res, vec4(sdBox(pos - vec3(-2.0, 0.0, 0.0), unitBox), RED));
-    res = opU(res, vec4(sdBox(pos - vec3(-2.0, 0.0, -2.0), unitBox), RED));
-    res = opU(res, vec4(sdBox(pos - vec3(-2.0, 0.0, -4.0), unitBox), RED));
-    res = opU(res, vec4(sdBox(pos - vec3(2.0, 0.0, 0.0), unitBox), RED));
-    res = opU(res, vec4(sdBox(pos - vec3(2.0, 0.0, -2.0), unitBox), RED));
-    res = opU(res, vec4(sdBox(pos - vec3(2.0, 0.0, -4.0), unitBox), RED));
+    res = opU(res, vec4(dPlane(pos, vec4(0.0, 1.0, 0.0, 0.5)), BLUE));
+    res = opU(res, vec4(dSphere(pos - vec3(0.0, 0.0, 0.0), 0.25), RED));
+    res = opU(res, vec4(dSphere(pos - vec3(0.0, 0.0, -2.0), 0.25), RED));
+    res = opU(res, vec4(dSphere(pos - vec3(0.0, 0.0, -4.0), 0.25), RED));
+    res = opU(res, vec4(dSphere(pos - vec3(-2.0, 0.0, 0.0), 0.25), RED));
+    res = opU(res, vec4(dSphere(pos - vec3(-2.0, 0.0, -2.0), 0.25), RED));
+    res = opU(res, vec4(dSphere(pos - vec3(-2.0, 0.0, -4.0), 0.25), RED));
+    res = opU(res, vec4(dSphere(pos - vec3(2.0, 0.0, 0.0), 0.25), RED));
+    res = opU(res, vec4(dSphere(pos - vec3(2.0, 0.0, -2.0), 0.25), RED));
+    res = opU(res, vec4(dSphere(pos - vec3(2.0, 0.0, -4.0), 0.25), RED));
 #endif
-    res = opU(res, vec4(sdSphere(pos - vec3(0.0, 0.0, 0.0), 0.25), RED));
-    res = opU(res, vec4(sdSphere(pos - vec3(0.0, 0.0, -2.0), 0.25), RED));
-    res = opU(res, vec4(sdSphere(pos - vec3(0.0, 0.0, -4.0), 0.25), RED));
-    res = opU(res, vec4(sdSphere(pos - vec3(-2.0, 0.0, 0.0), 0.25), RED));
-    res = opU(res, vec4(sdSphere(pos - vec3(-2.0, 0.0, -2.0), 0.25), RED));
-    res = opU(res, vec4(sdSphere(pos - vec3(-2.0, 0.0, -4.0), 0.25), RED));
-    res = opU(res, vec4(sdSphere(pos - vec3(2.0, 0.0, 0.0), 0.25), RED));
-    res = opU(res, vec4(sdSphere(pos - vec3(2.0, 0.0, -2.0), 0.25), RED));
-    res = opU(res, vec4(sdSphere(pos - vec3(2.0, 0.0, -4.0), 0.25), RED));
     return res;
 }
 
