@@ -32,6 +32,7 @@ vec4 opU(vec4 d1, vec4 d2) {
 
 vec4 map(in vec3 pos) {
     vec4 res = vec4(1e10, 0.0, 0.0, 0.0);
+#if 0
     res = opU(res, vec4(sdBox(pos - vec3(0.0, 0.0, 0.0), unitBox), RED));
     res = opU(res, vec4(sdBox(pos - vec3(0.0, 0.0, -2.0), unitBox), RED));
     res = opU(res, vec4(sdBox(pos - vec3(0.0, 0.0, -4.0), unitBox), RED));
@@ -41,6 +42,16 @@ vec4 map(in vec3 pos) {
     res = opU(res, vec4(sdBox(pos - vec3(2.0, 0.0, 0.0), unitBox), RED));
     res = opU(res, vec4(sdBox(pos - vec3(2.0, 0.0, -2.0), unitBox), RED));
     res = opU(res, vec4(sdBox(pos - vec3(2.0, 0.0, -4.0), unitBox), RED));
+#endif
+    res = opU(res, vec4(sdSphere(pos - vec3(0.0, 0.0, 0.0), 0.25), RED));
+    res = opU(res, vec4(sdSphere(pos - vec3(0.0, 0.0, -2.0), 0.25), RED));
+    res = opU(res, vec4(sdSphere(pos - vec3(0.0, 0.0, -4.0), 0.25), RED));
+    res = opU(res, vec4(sdSphere(pos - vec3(-2.0, 0.0, 0.0), 0.25), RED));
+    res = opU(res, vec4(sdSphere(pos - vec3(-2.0, 0.0, -2.0), 0.25), RED));
+    res = opU(res, vec4(sdSphere(pos - vec3(-2.0, 0.0, -4.0), 0.25), RED));
+    res = opU(res, vec4(sdSphere(pos - vec3(2.0, 0.0, 0.0), 0.25), RED));
+    res = opU(res, vec4(sdSphere(pos - vec3(2.0, 0.0, -2.0), 0.25), RED));
+    res = opU(res, vec4(sdSphere(pos - vec3(2.0, 0.0, -4.0), 0.25), RED));
     return res;
 }
 
@@ -52,6 +63,7 @@ void main() {
     float ny = nxNyHalfHeight.y;
     float halfHeight = nxNyHalfHeight.z;
     vec3 rayOrigin = eye.xyz;
+    vec3 up = cUp.xyz;
     float halfWidth = halfHeight * float(nx) / ny;
     float s = float(gl_GlobalInvocationID.x) / nx;
     float t = float(gl_GlobalInvocationID.y) / ny;
@@ -60,15 +72,21 @@ void main() {
     vec3 horizontal = 2.0 * halfWidth * u.xyz;
     vec3 vertical = 2.0 * halfHeight * v.xyz;
     vec3 rayDir = normalize(lowerLeftCorner + s * horizontal + t * vertical - rayOrigin);
+    float nextJump = 1.0;
 
     t = 0.0;
     for (int i=0; i<70 && t<tMax; i++) {
         vec4 hit = map(rayOrigin + t * rayDir);
-        if (abs(hit.x) < (0.0001 * t)) {
+        if (abs(hit.x) < 0.0001 * t) {
             color = vec4(hit.yzw, 1.0);
             break;
         }
-        t += hit.x;
+        if (abs(hit.x) <= nextJump - t) {
+            t += hit.x;
+        } else {
+            t = nextJump + 1.0;
+            nextJump = t + 1.0;
+        }
     }
     imageStore(pixels, ivec2(gl_GlobalInvocationID.xy), color);
 }

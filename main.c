@@ -18,7 +18,7 @@
 
 const float oneRadian = PI / 180.0f;
 const float fovy = 45.0f;
-const float speed = 0.1f;
+const float speed = 0.03f;
 const float sensitivity = 0.05f;
 
 float yaw = -90.0f, pitch = 0.0f;
@@ -54,7 +54,7 @@ typedef struct {
 
 static ShaderData initShaderData(int nx, int ny) {
     ShaderData shaderData = {0};
-    cP = newV3(0.0f, 0.0f, 1.5f);
+    cP = newV3(0.0f, 0.0f, 5.5f);
     wUp = newV3(0.0f, 1.0f, 0.0f);
     updateCamera();
     shaderData.nx = (float)nx;
