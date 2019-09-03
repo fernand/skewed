@@ -16,6 +16,16 @@ const float PI = 3.1415926535897932384626433832795;
 const vec3 RED = vec3(1., 0., 0.);
 const vec3 GREEN = vec3(0., 1., 0.);
 const vec3 BLUE = vec3(0., 0., 1.);
+
+const int RED_I = 0;
+const int GREEN_I = 1;
+const int BLUE_I = 2;
+
+const vec3 mat[3] = vec3[3](
+    RED,
+    GREEN,
+    BLUE
+);
 const vec3 unitBox = vec3(0.5, 0.5, 0.5);
 
 float dSphere(vec3 p, float r) {
@@ -31,34 +41,36 @@ float dPlane(vec3 p, vec4 n) {
     return abs(dot(p, n.xyz) + n.w);
 }
 
-vec4 opU(vec4 d1, vec4 d2) {
-    return (d1.x < d2.x) ? d1 : d2;
+struct Hit {
+    float closestDist;
+    float secondDist;
+    int closestMat;
+};
+
+struct Dist {
+    float dist;
+    int matI;
+};
+
+Hit op(Hit acc, Dist dc) {
+    Hit res;
+    if (acc.closestDist < dc.dist) {
+        res = acc;
+        if (dc.dist < acc.secondDist) {
+            res.secondDist = dc.dist;
+        }
+    } else {
+        res.closestDist = dc.dist;
+        res.closestMat = dc.matI;
+        res.secondDist = acc.closestDist;
+    }
+    return res;
 }
 
-vec4 map(in vec3 pos) {
-    vec4 res = vec4(1e10, 0.0, 0.0, 0.0);
-#if 0
-    res = opU(res, vec4(dPlane(pos, vec4(0.0, 1.0, 0.0, 0.5)), BLUE));
-    res = opU(res, vec4(dBox(pos - vec3(0.0, 0.0, 0.0), unitBox), RED));
-    res = opU(res, vec4(dBox(pos - vec3(0.0, 0.0, -2.0), unitBox), RED));
-    res = opU(res, vec4(dBox(pos - vec3(0.0, 0.0, -4.0), unitBox), RED));
-    res = opU(res, vec4(dBox(pos - vec3(-2.0, 0.0, 0.0), unitBox), RED));
-    res = opU(res, vec4(dBox(pos - vec3(-2.0, 0.0, -2.0), unitBox), RED));
-    res = opU(res, vec4(dBox(pos - vec3(-2.0, 0.0, -4.0), unitBox), RED));
-    res = opU(res, vec4(dBox(pos - vec3(2.0, 0.0, 0.0), unitBox), RED));
-    res = opU(res, vec4(dBox(pos - vec3(2.0, 0.0, -2.0), unitBox), RED));
-    res = opU(res, vec4(dBox(pos - vec3(2.0, 0.0, -4.0), unitBox), RED));
-#endif
-    res = opU(res, vec4(dPlane(pos, vec4(0.0, 1.0, 0.0, 0.5)), BLUE));
-    res = opU(res, vec4(dSphere(pos - vec3(0.0, 0.0, 0.0), 0.25), RED));
-    res = opU(res, vec4(dSphere(pos - vec3(0.0, 0.0, -2.0), 0.25), RED));
-    res = opU(res, vec4(dSphere(pos - vec3(0.0, 0.0, -4.0), 0.25), RED));
-    res = opU(res, vec4(dSphere(pos - vec3(-2.0, 0.0, 0.0), 0.25), RED));
-    res = opU(res, vec4(dSphere(pos - vec3(-2.0, 0.0, -2.0), 0.25), RED));
-    res = opU(res, vec4(dSphere(pos - vec3(-2.0, 0.0, -4.0), 0.25), RED));
-    res = opU(res, vec4(dSphere(pos - vec3(2.0, 0.0, 0.0), 0.25), RED));
-    res = opU(res, vec4(dSphere(pos - vec3(2.0, 0.0, -2.0), 0.25), RED));
-    res = opU(res, vec4(dSphere(pos - vec3(2.0, 0.0, -4.0), 0.25), RED));
+Hit map(in vec3 pos) {
+    Hit res = Hit(1e10, 1e10, 0);
+    res = op(res, Dist(dBox(pos - vec3(0.0, 0.0, -1.001), unitBox), RED_I));
+    res = op(res, Dist(dBox(pos - vec3(0.0, 0.0, 0.0), unitBox), BLUE_I));
     return res;
 }
 
@@ -79,20 +91,15 @@ void main() {
     vec3 horizontal = 2.0 * halfWidth * u.xyz;
     vec3 vertical = 2.0 * halfHeight * v.xyz;
     vec3 rayDir = normalize(lowerLeftCorner + s * horizontal + t * vertical - rayOrigin);
-    float nextJump = 1.0;
 
     t = 0.0;
     for (int i=0; i<70 && t<tMax; i++) {
-        vec4 hit = map(rayOrigin + t * rayDir);
-        if (abs(hit.x) < 0.0001 * t) {
-            color = vec4(hit.yzw, 1.0);
-            break;
-        }
-        if (abs(hit.x) <= nextJump - t) {
-            t += hit.x;
+        Hit hit = map(rayOrigin + t * rayDir);
+        if (abs(hit.closestDist) < 0.0001 * t) {
+            color += vec4(mat[hit.closestMat], 1.0);
+            t += hit.secondDist;
         } else {
-            t = nextJump + 1.0;
-            nextJump = t + 1.0;
+            t += hit.closestDist;
         }
     }
     imageStore(pixels, ivec2(gl_GlobalInvocationID.xy), color);
